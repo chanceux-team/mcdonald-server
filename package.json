@@ -21,7 +21,7 @@
     "@nestjs/swagger": "^7.3.0",
     "@nestjs/testing": "^10.3.3",
     "@nestjs/websockets": "^10.3.3",
-    "@prisma/client": "^5.10.1",
+    "@prisma/client": "^5.10.2",
     "argon2": "^0.31.2",
     "axios": "^1.6.7",
     "class-transformer": "^0.5.1",
