@@ -1,0 +1,6 @@
+{
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/deployphp/deployer/master/src/schema.json": "file:///Users/ouyang/Project/green-bubble-backend/.github/workflow/deploy.yml"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib"
+}
