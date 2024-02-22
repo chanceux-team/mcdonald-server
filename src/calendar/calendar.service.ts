@@ -9,11 +9,17 @@ export class CalendarService {
   async get(): Promise<any> {
     const data = await this.prisma.calendar.findMany({
       take: 365,
+      orderBy: {
+        id: 'desc',
+      },
     });
     return data;
   }
 
   async getDateOrCreate({ count, date }: { count?: number; date?: string }) {
+    if (!date) {
+      date = dayjs().format('YYYY-MM-DD');
+    }
     const formattedDate = dayjs(date).format('YYYY-MM-DD');
     let calendarEntry = await this.prisma.calendar.findFirst({
       where: {

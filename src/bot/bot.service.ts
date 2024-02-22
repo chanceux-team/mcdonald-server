@@ -20,7 +20,7 @@ export class BotService {
   async capture() {
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
-    await page.goto('https://test.lazegull.top');
+    await page.goto(process.env.FRONTEND_URL);
     await page.screenshot();
     const element = await page.$('.heatmap');
     if (element) {

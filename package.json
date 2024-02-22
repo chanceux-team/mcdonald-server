@@ -10,7 +10,8 @@
     "test": "jest --config=jest.json",
     "test:watch": "jest --watch --config=jest.json",
     "test:coverage": "jest --config=jest.json --coverage --coverageDirectory=coverage",
-    "migrate": "yarn prisma migrate dev"
+    "migrate": "yarn prisma migrate dev",
+    "db-seed": "NODE_ENV=development prisma db seed"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.3",
@@ -47,6 +48,10 @@
     "nodemon": "^3.0.3",
     "prisma": "^5.10.1",
     "ts-jest": "^29.1.2",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.1"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
