@@ -13,15 +13,11 @@ export class BotService {
     this.connect();
   }
 
-  getHello(): string {
-    return 'Hello World!';
-  }
-
   async capture() {
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
     await page.goto(process.env.FRONTEND_URL);
-    await page.screenshot();
+    await page.waitForSelector('.heatmap');
     const element = await page.$('.heatmap');
     if (element) {
       const data = await element.screenshot();
@@ -32,7 +28,6 @@ export class BotService {
     }
   }
 
-  // let ws;
   // 初始化 WebSocket 连接
   connect() {
     this.ws = new WebSocket(`wss://${process.env.MM_DOMAIN}/api/v4/websocket`);
