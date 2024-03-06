@@ -3,13 +3,13 @@ import * as WebSocket from 'ws';
 import puppeteer from 'puppeteer';
 import { FormData } from "formdata-node"
 import { Blob } from 'buffer';
+import { CalendarService } from '../calendar/calendar.service'
 
 @Injectable()
 export class BotService {
-  private ws: WebSocket | null;
+  private ws: WebSocket | null = null;
 
-  constructor() {
-    this.ws = null;
+  constructor(private readonly calendarService: CalendarService) {
     this.connect();
   }
 
@@ -48,56 +48,42 @@ export class BotService {
 
     this.ws.on('message', async (res) => {
       const data = JSON.parse(res as unknown as string);
-      if (data.event === 'posted') {
-        const post = JSON.parse(data.data.post);
-        if (post.message.startsWith('@mcdonalds')) {
-          if (post.message.includes('+1')) {
-            await fetch(`https://${process.env.FRONTEND_URL}/api/calendar/update`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ count: 1 }),
-            });
-          }
-          if (post.message.includes('-1')) {
-            await fetch(`https://${process.env.FRONTEND_URL}/api/calendar/update`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ count: -1 }),
-            });
-          }
-          const { file: buffer } = await this.capture();
-          const body = new FormData();
-          const fileName = `${new Date().toISOString().replace(/:/g, '-')}.png`;
-          body.append('files', new Blob([buffer]), fileName);
-          const response = await fetch(
-            `https://${process.env.MM_DOMAIN}/api/v4/files?channel_id=${post.channel_id}&filename=${fileName}`,
-            {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${process.env.BOT_TOKEN}`,
-              },
-              body: body,
-            },
-          );
-          const file = await response.json();
-          fetch(`https://${process.env.MM_DOMAIN}/api/v4/posts`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.BOT_TOKEN}`,
-            },
-            body: JSON.stringify({
-              channel_id: post.channel_id,
-              // root_id: post.id,
-              file_ids: file.file_infos.map((f) => f.id),
-            }),
-          });
-        }
-      }
+      if (data.event !== 'posted') return;
+      const post = JSON.parse(data.data.post);
+      // FIXME: 只输入@mcdonalds 命令会直接生成 2 张图
+      if (!post.message && !/^@mcdonalds( [+-]1)?$/.test(post.message)) return
+
+      await this.calendarService.updateCount({
+        operation: post.message.includes('-1') ? 'decrement' : 'increment'
+      })
+
+      const { file: buffer } = await this.capture();
+      const body = new FormData();
+      const fileName = `${new Date().toISOString().replace(/:/g, '-')}.png`;
+      body.append('files', new Blob([buffer]), fileName);
+      const response = await fetch(
+        `https://${process.env.MM_DOMAIN}/api/v4/files?channel_id=${post.channel_id}&filename=${fileName}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${process.env.BOT_TOKEN}`,
+          },
+          body: body,
+        },
+      );
+      const file = await response.json();
+      fetch(`https://${process.env.MM_DOMAIN}/api/v4/posts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.BOT_TOKEN}`,
+        },
+        body: JSON.stringify({
+          channel_id: post.channel_id,
+          // root_id: post.id,
+          file_ids: file.file_infos.map((f) => f.id),
+        }),
+      });
     });
   }
 }

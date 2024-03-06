@@ -13,7 +13,9 @@ import { PrismaService } from '../shared/services/prisma.service';
   controllers: [
     CalendarController
   ],
-  exports: []
+  exports: [
+    CalendarService
+  ]
 })
 export class CalendarModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {
