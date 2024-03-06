@@ -50,8 +50,7 @@ export class BotService {
       const data = JSON.parse(res as unknown as string);
       if (data.event !== 'posted') return;
       const post = JSON.parse(data.data.post);
-      // FIXME: 只输入@mcdonalds 命令会直接生成 2 张图
-      if (!post.message && !/^@mcdonalds( [+-]1)?$/.test(post.message)) return
+      if (!post.message || !/^@mcdonalds [+-]1$/.test(post.message)) return
 
       await this.calendarService.updateCount({
         operation: post.message.includes('-1') ? 'decrement' : 'increment'
