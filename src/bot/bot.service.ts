@@ -50,11 +50,14 @@ export class BotService {
       const data = JSON.parse(res as unknown as string);
       if (data.event !== 'posted') return;
       const post = JSON.parse(data.data.post);
-      if (!post.message || !/^@mcdonalds [+-]1$/.test(post.message)) return
+      if (!post.message || !post.message.startsWith('@mcdonalds')) return
 
-      await this.calendarService.updateCount({
-        operation: post.message.includes('-1') ? 'decrement' : 'increment'
-      })
+      if (/^@mcdonalds [+-]1$/.test(post.message)) {
+        const res = await this.calendarService.updateCount({
+          operation: post.message.includes('-1') ? 'decrement' : 'increment'
+        })
+      }
+
 
       const { file: buffer } = await this.capture();
       const body = new FormData();
