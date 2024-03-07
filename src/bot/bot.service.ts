@@ -52,10 +52,9 @@ export class BotService {
       const post = JSON.parse(data.data.post);
       if (!post.message || !post.message.startsWith('@mcdonalds')) return
 
-      if (/^@mcdonalds [+-]1$/.test(post.message)) {
-        const res = await this.calendarService.updateCount({
-          operation: post.message.includes('-1') ? 'decrement' : 'increment'
-        })
+      const count = Number(post.message.match(/@mcdonalds ([+-]?\d+)/)?.[1]) || undefined;
+      if (/@mcdonalds [+-]?\d+/.test(post.message)) {
+        await this.calendarService.updateCount({ count })
       }
 
 

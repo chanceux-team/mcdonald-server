@@ -2,6 +2,7 @@ import { Get, Controller, Param, Post, Body } from '@nestjs/common';
 import { CalendarService } from './calendar.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { CalendarUpdateDto } from './dto/index.dto';
+import type { Calendar } from './interface'
 
 @ApiBearerAuth()
 @ApiTags('calendar')
@@ -19,7 +20,7 @@ export class CalendarController {
   @Post()
   @ApiBody({ type: CalendarUpdateDto, required: false })
   @ApiConsumes('application/x-www-form-urlencoded')
-  async update(@Body() updateDto: CalendarUpdateDto): Promise<any[]> {
+  async update(@Body() updateDto: CalendarUpdateDto): Promise<Calendar> {
     return await this.service.updateCount(updateDto)
   }
 }

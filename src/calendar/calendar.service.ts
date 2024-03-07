@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../shared/services/prisma.service';
 import * as dayjs from 'dayjs';
+import type { Calendar, CalendarUpdateParams } from './interface'
 
 @Injectable()
 export class CalendarService {
   constructor(private prisma: PrismaService) { }
 
-  async get(): Promise<any> {
+  async get(): Promise<Calendar[]> {
     const data = await this.prisma.calendar.findMany({
       take: 365,
       orderBy: {
@@ -16,66 +17,38 @@ export class CalendarService {
     return data;
   }
 
-  async getDateOrCreate({ count, date }: { count?: number; date?: string }) {
-    if (!date) {
-      date = dayjs().format('YYYY-MM-DD');
-    }
-    const formattedDate = dayjs(date).format('YYYY-MM-DD');
-    let calendarEntry = await this.prisma.calendar.findFirst({
+  async updateCount(params?: Partial<Calendar>): Promise<Calendar> {
+    let { date, count } = params || {};
+
+    // 获取当前的 count 值
+    const currentCalendar = await this.prisma.calendar.findUnique({
       where: {
-        date: formattedDate,
+        date: dayjs(date).format('YYYY-MM-DD'),
       },
     });
 
-    if (!calendarEntry) {
-      calendarEntry = await this.prisma.calendar.create({
-        data: {
-          date: formattedDate,
-          count: count || 1,
-        },
-      });
+    // TODO: 返回400 状态码和错误信息给前端/mm
+    const updateCount = Number(currentCalendar.count + Number(count));
+    if (isNaN(updateCount)) {
+      throw new Error('Count must be a number');
+    }
+    if (currentCalendar && +updateCount < 0) {
+      throw new Error('Count cannot be less than 0');
     }
 
-    return calendarEntry;
-  }
-
-  async updateCount({ id, count, date, operation }: { id?: number; count?: number; date?: string; operation?: 'increment' | 'decrement' }) {
-    let result = null;
-    operation = operation || 'increment';
-    if (id) {
-      result = await this.prisma.calendar.update({
-        data: {
-          count: {
-            [operation]: count || 1,
-          },
+    return await this.prisma.calendar.upsert({
+      where: {
+        date: dayjs(date).format('YYYY-MM-DD'),
+      },
+      update: {
+        count: {
+          increment: count,
         },
-        where: {
-          id,
-        },
-      });
-    } else {
-      const updateDate = await this.getDateOrCreate({ count, date });
-      result = await this.prisma.calendar.update({
-        data: {
-          count: {
-            [operation]: count || 1,
-          },
-        },
-        where: {
-          date: updateDate.date,
-          ...(operation === 'decrement' && { count: { gte: count } }),
-        },
-      });
-    }
-    return result;
-  }
-
-  async increment(data: { id?: number; count?: number }) {
-    return this.updateCount({ ...data, operation: 'increment' });
-  }
-
-  async decrement(data: { id?: number; count?: number }) {
-    data.count = data.count && Math.abs(data.count);
-    return this.updateCount({ ...data, operation: 'decrement' });
+      },
+      create: {
+        date: dayjs(date).format('YYYY-MM-DD'),
+        count,
+      },
+    });
   }
 }
