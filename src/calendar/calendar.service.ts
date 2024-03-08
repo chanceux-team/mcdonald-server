@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../shared/services/prisma.service';
 import * as dayjs from 'dayjs';
 import type { Calendar, CalendarUpdateParams } from './interface'
+import type { CalendarQueryDto } from '../calendar/dto/index.dto'
 
 @Injectable()
 export class CalendarService {
@@ -17,7 +18,7 @@ export class CalendarService {
     return data;
   }
 
-  async updateCount(params?: Partial<Calendar>): Promise<Calendar> {
+  async updateCount(params?: Partial<CalendarUpdateParams>): Promise<Calendar> {
     let { date, count } = params || {};
 
     // 获取当前的 count 值
@@ -27,13 +28,12 @@ export class CalendarService {
       },
     });
 
-    // TODO: 返回400 状态码和错误信息给前端/mm
     const updateCount = currentCalendar ? Number(currentCalendar.count + count) : +count;
     if (isNaN(updateCount)) {
-      throw new Error('Count must be a number');
+      throw new HttpException('Count must be a number', HttpStatus.BAD_REQUEST);
     }
-    if (currentCalendar && +updateCount < 0) {
-      throw new Error('Count cannot be less than 0');
+    if (updateCount < 0) {
+      throw new HttpException('Count cannot be less than 0', HttpStatus.BAD_REQUEST);
     }
 
     return await this.prisma.calendar.upsert({
@@ -50,5 +50,18 @@ export class CalendarService {
         count,
       },
     });
+  }
+
+  async getCountSum(query?: CalendarQueryDto): Promise<number> {
+    const { start_date, end_date } = query || {};
+    const data = await this.prisma.calendar.findMany({
+      where: {
+        date: {
+          gte: start_date || dayjs().format('YYYY-MM-DD'),
+          lte: end_date || dayjs().format('YYYY-MM-DD'),
+        },
+      },
+    });
+    return data.reduce((sum, item) => sum + item.count, 0);
   }
 }

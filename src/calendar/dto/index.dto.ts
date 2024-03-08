@@ -12,9 +12,18 @@ export class CalendarUpdateDto {
     format: 'date-time'
   })
   date: string;
+}
+
+export class CalendarQueryDto {
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'date-time'
+  })
+  start_date: string;
 
   @ApiPropertyOptional({
-    enum: ['increment', 'decrement'],
+    type: 'string',
+    format: 'date-time'
   })
-  operation: 'increment' | 'decrement';
+  end_date: string;
 }
