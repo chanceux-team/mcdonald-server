@@ -28,7 +28,7 @@ export class CalendarService {
     });
 
     // TODO: 返回400 状态码和错误信息给前端/mm
-    const updateCount = Number(currentCalendar.count + Number(count));
+    const updateCount = currentCalendar ? Number(currentCalendar.count + count) : +count;
     if (isNaN(updateCount)) {
       throw new Error('Count must be a number');
     }
